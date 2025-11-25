@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GhostShell - Instance Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Smooch+Sans:wght@100..900&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Smooch Sans", sans-serif;
+      background: #000000;
+      color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
+      font-weight: 300;
+    }
+
+    .container {
+      padding: 40px;
+      height: 100vh;
+      overflow-y: auto;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+      color: #ffffff;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      color: #666666;
+      font-size: 16px;
+      font-weight: 300;
+    }
+
+    .section {
+      border: 1px solid #333333;
+      padding: 30px;
+      margin-bottom: 30px;
+      background: #000000;
+    }
+
+    .section h3 {
+      margin-bottom: 25px;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: -0.3px;
+    }
+
+    .instance-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border: 1px solid #333333;
+      margin-bottom: 15px;
+      background: #000000;
+    }
+
+    .instance-info {
+      flex: 1;
+    }
+
+    .instance-name {
+      font-size: 16px;
+      font-weight: 400;
+      margin-bottom: 5px;
+    }
+
+    .instance-details {
+      font-size: 12px;
+      color: #666666;
+    }
+
+    .instance-status {
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      margin-right: 15px;
+    }
+
+    .status-created {
+      background: #333333;
+      color: #ffffff;
+    }
+
+    .status-running {
+      background: #000000;
+      border: 1px solid #ffffff;
+      color: #ffffff;
+    }
+
+    .instance-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid #ffffff;
+      background: #000000;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: "Smooch Sans", sans-serif;
+    }
+
+    .btn-primary {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .btn-danger {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid #666666;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #666666;
+      color: #000000;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #cccccc;
+      font-weight: 300;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #333333;
+      background: #000000;
+      color: #ffffff;
+      font-size: 14px;
+      font-family: "Smooch Sans", sans-serif;
+      font-weight: 300;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #ffffff;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #666666;
+      padding: 40px;
+      font-size: 14px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #333333;
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 6px;
+    }
+
+    .nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #333333;
+    }
+
+    .nav-header h1 {
+      font-size: 36px;
+      /* increased from 32px */
+      margin: 0;
+      color: #ffffff;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-header p {
+      color: #666666;
+      font-size: 18px;
+      /* increased from 16px */
+      font-weight: 300;
+      margin: 0;
+    }
+
+    .back-btn {
+      padding: 8px 16px;
+      border: 1px solid #666666;
+      background: #000000;
+      color: #ffffff;
+      font-size: 14px;
+      /* increased from 12px */
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: "Smooch Sans", sans-serif;
+    }
+
+    .back-btn:hover {
+      border-color: #ffffff;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* Update existing font sizes */
+    .section h3 {
+      font-size: 20px;
+      /* increased from 18px */
+    }
+
+    .instance-name {
+      font-size: 18px;
+      /* increased from 16px */
+    }
+
+    .instance-details {
+      font-size: 14px;
+      /* increased from 12px */
+    }
+
+    .form-group label {
+      font-size: 16px;
+      /* increased from 14px */
+    }
+
+    .form-control {
+      font-size: 16px;
+      /* increased from 14px */
+    }
+
+    .btn {
+      font-size: 14px;
+      /* increased from 12px */
+    }
+
+    .empty-state {
+      font-size: 16px;
+      /* increased from 14px */
+    }
+
+    .status-active {
+      background: #000000;
+      border: 1px solid #666666;
+      color: #cccccc;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #ffffff;
+    }
+
+    .dual-config {
+      display: none;
+      margin-top: 25px;
+      margin-bottom: 25px;
+      padding: 25px;
+      border: 1px solid #222222;
+      background: #000000;
+    }
+
+    .dual-config.active {
+      display: block;
+    }
+
+    .time-group {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .time-group .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .stake-group {
+      display: flex;
+      gap: 20px;
+    }
+
+    .stake-group .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .status {
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      text-align: center;
+      font-weight: 300;
+    }
+
+    .status.success {
+      background: #000000;
+      border: 1px solid #ffffff;
+      color: #ffffff;
+    }
+
+    .status.error {
+      background: #000000;
+      border: 1px solid #666666;
+      color: #999999;
+    }
+
+    .status.info {
+      background: #000000;
+      border: 1px solid #333333;
+      color: #cccccc;
+    }
+
+    .status.warning {
+      background: #000000;
+      border: 1px solid #999999;
+      color: #cccccc;
+    }
+
+    .error-text {
+      color: #666666;
+      font-size: 12px;
+      margin-top: 5px;
+      font-weight: 300;
+    }
+
+    .auto-start-config {
+      display: none;
+      margin-top: 25px;
+      padding: 25px;
+      border: 1px solid #222222;
+      background: #000000;
+    }
+
+    .auto-start-config.active {
+      display: block;
+    }
+
+    /* Password input with toggle button */
+    .password-input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-input-container input {
+      flex: 1;
+      padding-right: 40px;
+      /* Make room for the button */
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      right: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: #666;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 3px;
+      transition: background-color 0.2s;
+    }
+
+    .password-toggle-btn:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .password-toggle-btn:focus {
+      outline: 2px solid #007bff;
+      outline-offset: 1px;
+    }
+
+    .password-eye-icon {
+      user-select: none;
+      line-height: 1;
+    }
+
+    /* Collapsible Config Sections */
+    .config-group {
+      margin-bottom: 20px;
+      border: 1px solid #222222;
+      background: #000000;
+    }
+
+    .config-header {
+      padding: 15px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #222222;
+      transition: background-color 0.2s ease;
+    }
+
+    .config-header:hover {
+      background: #111111;
+    }
+
+    .config-header h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 400;
+      color: #ffffff;
+    }
+
+    .toggle-icon {
+      font-size: 18px;
+      font-weight: bold;
+      color: #666666;
+      transition: transform 0.2s ease;
+    }
+
+    .toggle-icon.expanded {
+      transform: rotate(45deg);
+    }
+
+    .config-content {
+      display: none;
+      padding: 20px;
+    }
+
+    .config-content.active {
+      display: block;
+    }
+
+    .strategy-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 12px;
+      background-color: black;
+      color: white;
+    }
+
+    .strategy-preview-table th,
+    .strategy-preview-table td {
+      padding: 8px 12px;
+      text-align: center;
+      border: 1px solid white;
+      background-color: black;
+      color: white;
+    }
+
+    .strategy-preview-table th {
+      background-color: black;
+      font-weight: bold;
+      color: white;
+    }
+
+    .strategy-preview-table tr {
+      background-color: black;
+    }
+
+    .strategy-preview-table td {
+      background-color: black;
+      color: white;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      right: 15px;
+      font-size: 11px;
+      color: #444444;
+      z-index: 1000;
+    }
+
+    .footer a {
+      color: #666666;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer a:hover {
+      color: #ffffff;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Home Page -->
+    <div id="homePage" class="page active">
+      <div class="header">
+        <h1>GhostShell Manager</h1>
+        <p>Neural Weaver</p>
+      </div>
+
+      <!-- Instances List -->
+      <div class="section">
+        <h3>
+          Your Instances
+          <button class="btn" onclick="refreshStatus()" style="float: right; padding: 4px 8px; font-size: 12px">
+            Refresh Status
+          </button>
+        </h3>
+        <div id="instancesList">
+          <div class="empty-state">
+            No instances created yet. Create your first instance below.
+          </div>
+        </div>
+      </div>
+
+      <!-- Create New Instance -->
+      <div class="section">
+        <h3>Create New Instance</h3>
+        <div class="form-group">
+          <label for="newInstanceName">Instance Name:</label>
+          <input type="text" id="newInstanceName" class="form-control"
+            placeholder="Enter a name for this instance..." />
+        </div>
+        <div class="form-group">
+          <label for="newLicenseKey">License Key:</label>
+          <input type="text" id="newLicenseKey" class="form-control"
+            placeholder="Enter license key for this instance..." />
+        </div>
+        <button id="createInstanceBtn" class="btn btn-primary">
+          Create Instance
+        </button>
+      </div>
+    </div>
+
+    <!-- Instance Page Template -->
+    <div id="instancePage" class="page">
+      <div class="nav-header">
+        <div>
+          <h1 id="instanceTitle">Instance Name</h1>
+          <p id="instanceSubtitle">Instance Configuration & Control</p>
+        </div>
+        <button class="back-btn" onclick="showHomePage()">
+          ← Back to Home
+        </button>
+      </div>
+
+      <!-- License Section -->
+      <div class="section" id="licenseSection">
+        <h3>License Validation</h3>
+        <div class="form-group">
+          <label for="licenseKey">License Key:</label>
+          <input type="text" id="licenseKey" class="form-control" placeholder="License key..." />
+          <div id="licenseError" class="error-text hidden"></div>
+        </div>
+        <div id="licenseStatus" class="status hidden"></div>
+      </div>
+
+      <!-- Configuration Section -->
+      <div class="section" id="configSection">
+        <h3>Bot Configuration</h3>
+
+        <!-- Core Betting Settings -->
+        <div class="config-group">
+          <div class="config-header" onclick="toggleConfigSection('coreBetting')">
+            <h4>🎯 Core Betting Settings</h4>
+            <span class="toggle-icon" id="coreBetting-icon">+</span>
+          </div>
+          <div class="config-content" id="coreBetting-content">
+            <div class="form-group">
+              <label for="baseStake">Base Stake (KES):</label>
+              <input type="number" id="baseStake" class="form-control" value="100" min="1" />
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                Bot will place minimum bet with value set here plus a random
+                20% increase (e.g., 100 = 100-120 KES bets)
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="betInterval">Bet Interval (max minutes):</label>
+              <input type="number" id="betInterval" class="form-control" value="4.8" min="0.5" max="30" step="0.1" />
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                Bot will bet randomly between 60-100% of this time (e.g., 5
+                min setting = 3-5 min actual)
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="freeBetInterval">Free Bet Check Interval (minutes):</label>
+              <input type="number" id="freeBetInterval" class="form-control" value="10" min="1" step="1" />
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                Recommended: 10 minutes for MozzartBet, 60 minutes for
+                Sportpesa & DBets
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="autoStopTime">Auto-Stop Time (24h):</label>
+              <input type="text" id="autoStopTime" class="form-control" value="" placeholder="HH:MM (optional)" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Betting Features -->
+        <div class="config-group">
+          <div class="config-header" onclick="toggleConfigSection('advancedBetting')">
+            <h4>🚀 Advanced Betting Features</h4>
+            <span class="toggle-icon" id="advancedBetting-icon">+</span>
+          </div>
+          <div class="config-content" id="advancedBetting-content">
+            <!-- Dual Betting Toggle -->
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="dualBetting" />
+                <label for="dualBetting">Enable Dual Betting</label>
+              </div>
+            </div>
+
+            <!-- Dual Betting Configuration -->
+            <div class="dual-config" id="dualConfig">
+              <div class="time-group">
+                <div class="form-group">
+                  <label for="startTime">Start Time (24h):</label>
+                  <input type="text" id="startTime" class="form-control" value="16:00" placeholder="HH:MM" />
+                  <div id="startTimeError" class="error-text hidden"></div>
+                </div>
+                <div class="form-group">
+                  <label for="endTime">End Time (24h):</label>
+                  <input type="text" id="endTime" class="form-control" value="02:00" placeholder="HH:MM" />
+                  <div id="endTimeError" class="error-text hidden"></div>
+                </div>
+              </div>
+
+              <div class="stake-group">
+                <div class="form-group">
+                  <label for="panel1Stake">Panel 1 Stake (KES):</label>
+                  <input type="number" id="panel1Stake" class="form-control" value="150" min="1" />
+                </div>
+                <div class="form-group">
+                  <label for="panel2Stake">Panel 2 Stake (KES):</label>
+                  <input type="number" id="panel2Stake" class="form-control" value="150" min="1" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Intelligence Staking Configuration -->
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="intelligenceStaking" />
+                <label for="intelligenceStaking">Enable Intelligence Staking</label>
+              </div>
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 8px">
+                Pauses regular betting when no rain detected for specified
+                time (saves losses during dry periods)
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="intelligenceThreshold">Intelligence Threshold (minutes):</label>
+              <input type="number" id="intelligenceThreshold" class="form-control" value="60" min="15" max="120"
+                step="5" />
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                Stop regular betting after this many minutes without rain (max
+                pause: 2hrs 20mins)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SportPesa Specific Features -->
+        <div class="config-group">
+          <div class="config-header" onclick="toggleConfigSection('sportpesaFeatures')">
+            <h4>🏟️ SportPesa Specific Features</h4>
+            <span class="toggle-icon" id="sportpesaFeatures-icon">+</span>
+          </div>
+          <div class="config-content" id="sportpesaFeatures-content">
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="sportpesaChatRefresh" />
+                <label for="sportpesaChatRefresh">Enable Chat Refresh</label>
+              </div>
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 8px">
+                Automatically refreshes chat connection on SportPesa to keep
+                it active
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="chatRefreshInterval">Chat Refresh Interval (minutes):</label>
+              <input type="number" id="chatRefreshInterval" class="form-control" value="15" min="5" max="60" step="1" />
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                How often to refresh chat connection (5-60 minutes)
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="avatarChangeEnabled" />
+                <label for="avatarChangeEnabled">Enable Avatar Change</label>
+              </div>
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 8px">
+                Automatically changes avatar at specified intervals on
+                SportPesa
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="avatarChangeInterval">Avatar Change Interval (minutes):</label>
+              <input type="number" id="avatarChangeInterval" class="form-control" value="" min="5" max="1440" step="1"
+                placeholder="Enter minutes" />
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                How often to change avatar (5-1440 minutes)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Free Bet Strategy Selection -->
+        <div class="config-group">
+          <div class="config-header" onclick="toggleConfigSection('freeBetStrategy')">
+            <h4>🎯 Free Bet Strategy Selection</h4>
+            <span class="toggle-icon" id="freeBetStrategy-icon">+</span>
+          </div>
+          <div class="config-content" id="freeBetStrategy-content">
+            <div class="form-group">
+              <label for="freeBetStrategySelect">Select Strategy:</label>
+              <select id="freeBetStrategySelect" class="form-control">
+                <option value="conservative">Conservative (Default)</option>
+                <option value="aggressive">Aggressive (Higher Risk)</option>
+                <option value="balanced">Balanced (Medium Risk)</option>
+                <option value="dynamic">Dynamic (Variable by Amount)</option>
+                <option value="reserved">Reserved (Ultra Conservative)</option>
+              </select>
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                Choose your preferred multiplier strategy for free bet processing
+              </div>
+            </div>
+
+          
+
+            <div class="form-group">
+              <button type="button" id="previewStrategyBtn" class="btn" style="padding: 6px 12px; font-size: 12px;">
+                Preview Strategy
+              </button>
+              <div style="font-size: 10px; color: #666; margin-top: 3px;">
+                Click to update preview
+              </div>
+            </div>
+
+            <div id="strategyPreview" class="hidden"
+              style="margin-top: 15px; padding: 15px; border: 1px solid #333; background: #111;">
+              <h5 style="margin-bottom: 10px; color: #fff;">Strategy Preview:</h5>
+              <div id="previewContent" style="font-family: monospace; font-size: 11px; color: #ccc;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto-Start Configuration -->
+        <div class="config-group">
+          <div class="config-header" onclick="toggleConfigSection('autoStartConfig')">
+            <h4>⏰ Auto-Start Configuration</h4>
+            <span class="toggle-icon" id="autoStartConfig-icon">+</span>
+          </div>
+          <div class="config-content" id="autoStartConfig-content">
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="autoStart" />
+                <label for="autoStart">Enable Auto-Start</label>
+              </div>
+              <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 8px">
+                When enabled, bot will automatically launch browser, login,
+                and start scripts at the specified time
+              </div>
+            </div>
+
+            <!-- Auto-Start Configuration Panel -->
+            <div class="auto-start-config" id="autoStartConfigPanel">
+              <div class="form-group">
+                <label for="autoStartTime">Auto-Start Time (24h):</label>
+                <input type="text" id="autoStartTime" class="form-control" value="" placeholder="HH:MM" />
+                <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                  Time when bot should automatically start (e.g., 08:00)
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Select Site:</label>
+                <div style="display: flex; gap: 20px; margin-top: 8px">
+                  <div style="display: flex; align-items: center; gap: 8px">
+                    <input type="radio" id="siteBetnare" name="autoStartSite" value="betnare" />
+                    <label for="siteBetnare" style="margin: 0">Betnare</label>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px">
+                    <input type="radio" id="sportpesa" name="autoStartSite" value="sportpesa" />
+                    <label for="sportpesa" style="margin: 0">Sportpesa</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="autoStartUsername">Username/Phone:</label>
+                <input type="text" id="autoStartUsername" class="form-control"
+                  placeholder="Enter username or phone number" />
+                <div class="error-text" style="color: #666666; font-size: 12px; margin-top: 5px">
+                  For phone numbers, use digits only (e.g., 0712345678)
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="autoStartPassword">Password:</label>
+                <div class="password-input-container">
+                  <input type="password" id="autoStartPassword" class="form-control" placeholder="Enter password" />
+                  <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()">
+                    <span class="password-eye-icon">👁️</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Control Section -->
+      <div class="section" id="controlSection">
+        <h3>Bot Control</h3>
+        <div id="controlStatus" class="status hidden"></div>
+        <button id="launchBrowserBtn" class="btn btn-secondary">
+          Open Browser
+        </button>
+        <div id="launchError" class="error-message hidden" style="color: red; margin-top: 8px"></div>
+        <button id="startScriptsBtn" class="btn btn-primary hidden">
+          Start System
+        </button>
+        <button id="stopScriptsBtn" class="btn btn-danger hidden">
+          Stop System
+        </button>
+      </div>
+    </div>
+    <!-- <div class="footer">
+        <p>@chibunnna</p>
+      </div> -->
+  </div>
+  </div>
+
+  <script src="manager-renderer.js"></script>
+</body>
+
+</html>

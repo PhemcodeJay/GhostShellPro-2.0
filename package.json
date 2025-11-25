@@ -1,0 +1,43 @@
+{
+  "name": "GhostShell",
+  "version": "2.5.1",
+  "description": "GhostShell",
+  "main": "src/manager.js",
+  "author": "Phemcode",
+  "scripts": {
+    "start": "npx electron .",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0",
+    "jose": "^5.10.0",
+    "jsonwebtoken": "^9.0.2",
+    "node-machine-id": "^1.1.12",
+    "puppeteer": "^24.17.0",
+    "puppeteer-core": "^24.22.2",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "sudo-prompt": "^9.2.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "electron": "^38.7.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.phemcode.ghostshell",
+    "productName": "GhostShellPro",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "win": {
+      "target": "portable",
+      "artifactName": "GhostShellPro.exe"
+    }
+  }
+}
